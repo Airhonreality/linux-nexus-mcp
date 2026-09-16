@@ -1,0 +1,17 @@
+{
+  "name": "linux-nexus-mcp",
+  "version": "1.0.0",
+  "description": "Gateway MCP remoto: expone un workspace local (archivos + comandos con confirmación humana) a cualquier chat con soporte MCP, vía túnel público con URL fija gratuita.",
+  "type": "module",
+  "bin": {
+    "nexus-gateway-server": "src/server.mjs"
+  },
+  "scripts": {
+    "start": "node src/server.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sandbox-runtime": "^0.0.76",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.6.2"
+  }
+}

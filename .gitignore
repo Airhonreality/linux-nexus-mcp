@@ -1,0 +1,5 @@
+node_modules/
+CONEXION_MCP.md
+cf-worker/wrangler.jsonc
+cf-worker/.wrangler/
+*.log

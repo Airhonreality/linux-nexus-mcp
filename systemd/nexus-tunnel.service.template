@@ -1,0 +1,14 @@
+[Unit]
+Description=Nexus MCP Gateway — túnel público (Cloudflare Quick Tunnel)
+After=network-online.target nexus-gateway.service
+Wants=network-online.target
+Requires=nexus-gateway.service
+
+[Service]
+Type=simple
+ExecStart=__REPO_DIR__/scripts/run-tunnel.sh
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target

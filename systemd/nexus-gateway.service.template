@@ -1,0 +1,14 @@
+[Unit]
+Description=Nexus MCP Gateway — servidor HTTP
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=%h/.config/nexus-os/gateway.env
+ExecStart=/usr/bin/node __REPO_DIR__/src/server.mjs
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target
