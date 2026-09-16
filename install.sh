@@ -40,16 +40,27 @@ if [[ ! -f "$CONFIG" ]]; then
   read -rp "¿Qué carpeta querés servir por el gateway? [default: $PWD]: " WORKSPACE
   WORKSPACE="${WORKSPACE:-$PWD}"
   WORKSPACE="$(realpath "$WORKSPACE")"
+  DEFAULT_INSTANCE="$(hostname)"
+  read -rp "Nombre de esta instancia/máquina (para poder tener varias vivas a la vez) [default: $DEFAULT_INSTANCE]: " INSTANCE_ID
+  INSTANCE_ID="${INSTANCE_ID:-$DEFAULT_INSTANCE}"
   TOKEN="$(openssl rand -hex 32)"
   cat > "$CONFIG" <<EOF
 NEXUS_GATEWAY_TOKEN=$TOKEN
 NEXUS_GATEWAY_PORT=8787
 NEXUS_WORKSPACE_ROOT=$WORKSPACE
+NEXUS_INSTANCE_ID=$INSTANCE_ID
 EOF
   chmod 600 "$CONFIG"
   echo "Config nueva creada en $CONFIG"
 else
   echo "Ya existe $CONFIG, lo dejo como está."
+  if ! grep -q '^NEXUS_INSTANCE_ID=' "$CONFIG"; then
+    DEFAULT_INSTANCE="$(hostname)"
+    read -rp "Esta config es de antes del soporte multi-instancia. Nombre para esta máquina [default: $DEFAULT_INSTANCE]: " INSTANCE_ID
+    INSTANCE_ID="${INSTANCE_ID:-$DEFAULT_INSTANCE}"
+    echo "NEXUS_INSTANCE_ID=$INSTANCE_ID" >> "$CONFIG"
+    echo "Agregado NEXUS_INSTANCE_ID=$INSTANCE_ID a $CONFIG"
+  fi
 fi
 
 # 4. CLIs cortos (nurl, nexus-gateway)
@@ -150,12 +161,20 @@ if [[ "$SETUP_WORKER" =~ ^[sS]$ ]]; then
       sed "s|__KV_NAMESPACE_ID__|$EXISTING_ID|" wrangler.jsonc.example > wrangler.jsonc
     fi
 
+    INSTANCE_ID="$(grep '^NEXUS_INSTANCE_ID=' "$CONFIG" | cut -d= -f2-)"
+    KV_KEY="current_url"
+    [[ -n "$INSTANCE_ID" ]] && KV_KEY="backend:$INSTANCE_ID"
+
     if [[ -n "${URL:-}" ]]; then
-      npx -y wrangler kv key put --binding=NEXUS_GATEWAY_KV "current_url" "$URL" --remote || true
+      npx -y wrangler kv key put --binding=NEXUS_GATEWAY_KV "$KV_KEY" "$URL" --remote || true
     fi
 
     npx -y wrangler deploy
-    PUBLIC_URL="https://nexus-gateway-proxy.$HAS_SUBDOMAIN.workers.dev/mcp"
+    if [[ -n "$INSTANCE_ID" ]]; then
+      PUBLIC_URL="https://nexus-gateway-proxy.$HAS_SUBDOMAIN.workers.dev/$INSTANCE_ID/mcp"
+    else
+      PUBLIC_URL="https://nexus-gateway-proxy.$HAS_SUBDOMAIN.workers.dev/mcp"
+    fi
     if grep -q '^NEXUS_PUBLIC_URL=' "$CONFIG"; then
       sed -i "s|^NEXUS_PUBLIC_URL=.*|NEXUS_PUBLIC_URL=$PUBLIC_URL|" "$CONFIG"
     else

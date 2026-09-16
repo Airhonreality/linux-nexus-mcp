@@ -6,6 +6,7 @@ Requires=nexus-gateway.service
 
 [Service]
 Type=simple
+EnvironmentFile=%h/.config/nexus-os/gateway.env
 ExecStart=__REPO_DIR__/scripts/run-tunnel.sh
 Restart=always
 RestartSec=3

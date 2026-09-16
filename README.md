@@ -78,16 +78,37 @@ cambia cada vez que el servicio se reinicia. Para verla:
 `nurl`. Podés agregar la URL fija después corriendo `install.sh` de
 nuevo.
 
-## Instalar en otra máquina
+## Varias máquinas/carpetas vivas al mismo tiempo
 
-Repetís exactamente los mismos pasos (`git clone` + `bash install.sh`)
-ahí. Si usás la **misma cuenta de Cloudflare** en ambas máquinas y
-querés que las dos respondan bajo la misma URL fija, tené en cuenta que
-el valor "backend actual" en Cloudflare KV es uno solo — la última
-máquina cuyo túnel se reinicie es la que queda activa. Para tener dos
-máquinas gateway-eadas *a la vez* con URLs fijas independientes, correr
-la parte de Workers del instalador con un nombre de Worker/KV distinto
-en cada una (editar `cf-worker/wrangler.jsonc` después de generarlo).
+Cada instalación tiene un **`NEXUS_INSTANCE_ID`** (por default, el
+hostname de la máquina — `install.sh` te lo pregunta). Con eso, la URL
+pública fija queda:
+
+```
+https://nexus-gateway-proxy.<tu-subdominio>.workers.dev/<instance_id>/mcp
+```
+
+Instalás igual (`git clone` + `bash install.sh`) en cada máquina que
+quieras tener viva a la vez — **usando la misma cuenta de Cloudflare**
+en todas (mismo Worker, mismo KV; el ruteo por instancia hace que no se
+pisen entre sí). Cada máquina termina con su propia URL fija, todas bajo
+el mismo dominio base. En el chat (HuggingChat, etc.) agregás **una
+entrada "Custom Server" por máquina** — cada una con su URL y su propio
+interruptor, así elegís con cuál hablar en cada conversación (o dejás
+varias prendidas si querés que el modelo tenga acceso a más de una a la
+vez).
+
+Una sola máquina puede seguir sirviendo una sola carpeta a la vez
+(cambiás con `nexus-gateway <carpeta>`, como siempre) — lo que este
+mecanismo agrega es poder tener **máquinas distintas** respondiendo en
+paralelo, no múltiples carpetas simultáneas dentro de una misma máquina
+(para eso hace falta correr una segunda instancia del gateway en otro
+puerto ahí mismo — no armado todavía, avisar si hace falta).
+
+**Compatibilidad:** una URL vieja sin `/instance_id/` (`.../mcp` pelado)
+sigue funcionando — usa la clave legacy `current_url` en KV. No hace
+falta reconfigurar un chat ya armado antes de este cambio, salvo que
+quieras pasarlo al esquema con nombre.
 
 ## Modelo de seguridad (resumen)
 

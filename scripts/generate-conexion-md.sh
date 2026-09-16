@@ -18,6 +18,17 @@ set -a; source "$CONFIG"; set +a
 
 OUT="$REPO_DIR/CONEXION_MCP.md"
 
+INSTANCE_URL="${NEXUS_PUBLIC_URL:-<todavía no configurada, ver README sección Worker>}"
+if [[ -n "${NEXUS_INSTANCE_ID:-}" && -n "${NEXUS_PUBLIC_URL:-}" ]]; then
+  # NEXUS_PUBLIC_URL ya viene con la instancia si install.sh corrió después
+  # de agregar NEXUS_INSTANCE_ID — este bloque es solo un respaldo por si
+  # se editó gateway.env a mano.
+  BASE_NO_MCP="${NEXUS_PUBLIC_URL%/mcp}"
+  if [[ "$BASE_NO_MCP" != *"/$NEXUS_INSTANCE_ID" ]]; then
+    INSTANCE_URL="${BASE_NO_MCP}/${NEXUS_INSTANCE_ID}/mcp"
+  fi
+fi
+
 cat > "$OUT" <<EOF
 # Conexión al Gateway MCP — referencia rápida
 
@@ -28,7 +39,8 @@ cat > "$OUT" <<EOF
 
 | Campo | Valor |
 |---|---|
-| **URL** | \`${NEXUS_PUBLIC_URL:-<todavía no configurada, ver README sección Worker>}\` |
+| **URL** | \`${INSTANCE_URL}\` |
+| **Instancia** | \`${NEXUS_INSTANCE_ID:-(default, sin nombre — URL legacy /mcp)}\` |
 | **Header (nombre)** | \`X-Nexus-Token\` |
 | **Header (valor / token)** | \`${NEXUS_GATEWAY_TOKEN}\` |
 

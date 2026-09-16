@@ -25,9 +25,13 @@ mkdir -p "$STATE_DIR"
         notify-send "Nexus Gateway" "Nueva URL del túnel: $url" || true
       fi
       if [[ -f "$CF_WORKER_DIR/wrangler.jsonc" ]]; then
+        KV_KEY="current_url"
+        if [[ -n "${NEXUS_INSTANCE_ID:-}" ]]; then
+          KV_KEY="backend:${NEXUS_INSTANCE_ID}"
+        fi
         (
           cd "$CF_WORKER_DIR" && \
-          npx -y wrangler kv key put --binding=NEXUS_GATEWAY_KV "current_url" "$url" --remote \
+          npx -y wrangler kv key put --binding=NEXUS_GATEWAY_KV "$KV_KEY" "$url" --remote \
             >> "$STATE_DIR/kv-update.log" 2>&1
         ) || echo "AVISO: no se pudo actualizar Cloudflare KV con la URL nueva"
       fi
